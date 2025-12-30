@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source /etc/os-release
+
 EMPS="/usr/local/emps"
 mirror_url=files.softaculous.com
 FILEREPO=https://files.virtualizor.com
@@ -66,16 +68,61 @@ if [[ ! -d $EMPS ]]; then
       exit 0
 fi
 
+
 # Restoring database 
 if ls -A "$DATBASE_FILE" >/dev/null 2>&1; then
-  echo "Database backup files found the server..."
+  echo "Database backup files found on the server..."
 
-  #Prompt to select a file
-  SELECTED_FILE=$(ls -1 $DATBASE_FILE | fzf --prompt="Select file that you want to resore:  ")
-  if [[ -z "$SELECTED_FILE" ]]; then
-    echo "NO file selected: Exiting..."
-    exit 0
-  fi
+  SELECTED_FILE=""
+
+  # Checking fzf installed 
+  if command -v fzf >/dev/null 2>&1; then
+    echo "fzf is installed."
+    SELECTED_FILE=$(ls -1 $DATBASE_FILE | fzf --prompt="Select file that you want to restore:  ")
+  else
+    echo "fzf is not installed, so installing fzf for better output."
+
+      # checking host os 
+      if [[ "$ID" == "almalinux" || "$ID" == "centos" || "$ID" == "rocky" ]]; then
+        echo "Detected $ID"
+        yum install epel-release -y >/dev/null 2>&1
+        yum install fzf -y >/dev/null 2>&1
+
+        if [[ $? -eq 0 ]]; then
+          echo "fzf is installed now"
+          SELECTED_FILE=$(ls -1 $DATBASE_FILE | fzf --prompt="Select file that you want to restore:  ")
+        else
+          echo "Failed to installed fzf. so going furter steps,"
+        fi
+
+      elif [[ "$ID" == "ubuntu" || "$ID" == "debian" ]]
+      then
+        apt update -y >/dev/null 2>&1 && apt install fzf -y >/dev/null 2>&1
+
+        if [[ $? -eq 0 ]]; then
+          echo "fzf is installed now"
+          SELECTED_FILE=$(ls -1 $DATBASE_FILE | fzf --prompt="Select file that you want to restore:  ")
+        else
+          echo "Failed to install fzf"
+        fi
+      fi
+
+
+
+      # Manully copy file
+      if [[ -z "$SELECTED_FILE" ]]
+      then
+        echo "Available backup files:"
+        ls -1 $DATBASE_FILE
+      echo "you will have to manually copy the file name paste it.."
+      fi 
+      read -p "Please paste file name so will be proceed to restoring.." SELECTED_FILE
+      if [[ -z "$SELECTED_FILE" ]]
+      then echo "NO filename entered"
+        exit 1
+      fi
+    fi
+
 
   echo "You have selected $SELECTED_FILE"
   read -p "Do you want to restore database?  (yes/no)" ask
