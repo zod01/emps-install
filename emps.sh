@@ -70,7 +70,7 @@ fi
 
 
 # Restoring database 
-if ls -A "$DATBASE_FILE" >/dev/null 2>&1; then
+if [[ -n "$(ls -A "$DATBASE_FILE" >/dev/null 2>&1)"  ]]; then
   echo "Database backup files found on the server..."
 
   SELECTED_FILE=""
@@ -130,7 +130,7 @@ if ls -A "$DATBASE_FILE" >/dev/null 2>&1; then
       $RESORE_DB $SELECTED_FILE >/dev/null 2>&1
       echo "Restored successfully..."
     else
-      echo "Restore cancelled"
+      echo "Restore cancelled, emps is successfully installed on the server, if you latest database backup then you can restore it!!"
       exit 0
     fi
 else
