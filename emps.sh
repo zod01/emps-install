@@ -20,7 +20,7 @@ RESORE_DB="/usr/local/emps/bin/php /usr/local/virtualizor/scripts/db_restore.php
 # checking if emps is present or not
 if [[ ! -d $EMPS ]]; then
   echo "Installing emps and configured database as well, since emps got removed from server so the database has removed as well..."
-  wget --no-check-certificate -N -O /usr/local/virtualizor/EMPS.tar.gz "https://$mirror_url/emps.php?latest=1&arch=x86_64" >/dev/null 2>&1
+  wget --no-check-certificate -N -O /usr/local/virtualizor/EMPS.tar.gz "https://$mirror_url/emps.php?latest=1&arch=x86_64"  -q  --show-progress --progress=dot 2>&1
   # Extract EMPS
   echo "Extracting emps under $EMPS"
   mkdir /usr/local/emps
