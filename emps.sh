@@ -15,7 +15,7 @@ MYSQLCTL="/usr/local/emps/bin/mysqlctl"
 SQL_FILE="/usr/local/virtualizor/virtualizor.sql"
 DBpass=$(grep "\['dbpass'\]" "$UNIVERSAL_FILE" | cut -d"'" -f4)
 DATBASE_FILE="/var/virtualizor/dbbackups/"
-RESORE_DB="/usr/local/emps/bin/php /usr/local/virtualizor/scripts/db_restore.php"
+RESTORE_DB="/usr/local/emps/bin/php /usr/local/virtualizor/scripts/db_restore.php"
 
 # checking if emps is present or not
 if [[ ! -d $EMPS ]]; then
@@ -66,65 +66,55 @@ else
   exit 0
 fi
 
-# Restoring database
-if [[ -n "$(ls -A "$DATBASE_FILE" 2>/dev/null)" ]]; then
-  echo "Database backup files found on the server..."
 
-  SELECTED_FILE=""
+# Restore Database from backup
+if [[ -n "$(ls -A "$DATBASE_FILE" 2>/dev/null)" ]]
+then
+  echo "Database backups found on the server...."
+  echo "If files are listing below are too older and you have latest, then you can skip restore and restore database manually later"
+  echo ""
+  ls -lh "$DATBASE_FILE"
+  echo ""
+  echo ""
+  echo "Select database file for restore:"
+  echo "1) To restore"
+  echo "2) Skip"
+  read -p "Enter you choice (1-2): " choice
 
-  # Checking fzf installed
-  if command -v fzf >/dev/null 2>&1; then
-    echo "fzf is installed."
-    SELECTED_FILE=$(ls -1 $DATBASE_FILE | fzf --prompt="Select file that you want to restore:  ")
-  else
-    echo "fzf is not installed, so installing fzf for better output."
+  case "$choice" in
+    1)
+      PS3="Choose a file (enter a number): "
+      files=( "$DATBASE_FILE"/* )
 
-    # checking host os
-    if [[ "$ID" == "almalinux" || "$ID" == "centos" || "$ID" == "rocky" ]]; then
-      echo "Detected $ID"
-      yum install epel-release -y >/dev/null 2>&1
-      yum install fzf -y >/dev/null 2>&1
-
-      if [[ $? -eq 0 ]]; then
-        echo "fzf is installed now"
-        SELECTED_FILE=$(ls -1 $DATBASE_FILE | fzf --prompt="Select file that you want to restore:  ")
-      else
-        echo "Failed to installed fzf. so going furter steps,"
-      fi
-
-    elif [[ "$ID" == "ubuntu" || "$ID" == "debian" ]]; then
-      apt update -y >/dev/null 2>&1 && apt install fzf -y >/dev/null 2>&1
-
-      if [[ $? -eq 0 ]]; then
-        echo "fzf is installed now"
-        SELECTED_FILE=$(ls -1 $DATBASE_FILE | fzf --prompt="Select file that you want to restore:  ")
-      else
-        echo "Failed to install fzf"
-      fi
-    fi
-
-    # Manully copy file
-    if [[ -z "$SELECTED_FILE" ]]; then
-      echo "Available backup files:"
-      ls -1 $DATBASE_FILE
-      echo "you will have to manually copy the file name paste it.."
-    fi
-    read -p "Please paste file name so will be proceed to restoring.." SELECTED_FILE
-    if [[ -z "$SELECTED_FILE" ]]; then
-      echo "NO filename entered"
+      select file in "${files[@]}"; do
+        if [[ -n "$file" ]]
+        then
+          SELECTED_FILE="$file"
+          echo "You have selected: $SELECTED_FILE"
+          echo "Restoring database from $SELECTED_FILE"
+          $RESTORE_DB "$SELECTED_FILE"
+          echo "Restored successfully..."
+          break
+        else
+          echo "Invaild choice, try again"
+        fi
+      done
+      ;;
+    2)
+      echo "Skipping restore,"
+      SELECTED_FILE=""
+      ;;
+    *)
+      echo "Invaild options"
+      echo "Emps has been installed successfully, but unable to restore database. you can restore it manually"
       exit 1
-    fi
-  fi
+    esac
 
-  echo "You have selected $SELECTED_FILE"
-  read -p "Do you want to restore database?  (yes/no)" ask
-  if [[ $ask == "yes" || $ask == "YES" ]]; then
-    $RESORE_DB $SELECTED_FILE >/dev/null 2>&1
-    echo "Restored successfully..."
-  else
-    echo "Restore cancelled, emps is successfully installed on the server, if you latest database backup then you can restore it!!"
-    exit 0
-  fi
+
+ echo "Restoring datbase from $SELECTED_FILE"
+ $RESORE_DB $SELECTED_FILE
+ echo "Restored successfully..."
 else
-  echo "NO database backup found the server, so if you have lastest database then you can upload it to $DATBASE_FILE and then restore it.."
+  echo "No database backups founds on the server!"
+  exit 0
 fi
