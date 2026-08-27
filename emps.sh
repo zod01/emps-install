@@ -14,7 +14,7 @@ DBuser="root"
 MYSQLCTL="/usr/local/emps/bin/mysqlctl"
 SQL_FILE="/usr/local/virtualizor/virtualizor.sql"
 DBpass=$(grep "\['dbpass'\]" "$UNIVERSAL_FILE" | cut -d"'" -f4)
-DATBASE_FILE="/var/virtualizor/dbbackups/"
+DATBASE_FILE="/var/virtualizor/dbbackups"
 RESTORE_DB="/usr/local/emps/bin/php /usr/local/virtualizor/scripts/db_restore.php"
 
 # checking if emps is present or not
@@ -89,9 +89,10 @@ then
       select file in "${files[@]}"; do
         if [[ -n "$file" ]]
         then
-          SELECTED_FILE="$file"
+          SELECTED_FILE=(basename "$file")
           echo "You have selected: $SELECTED_FILE"
           echo "Restoring database from $SELECTED_FILE"
+          cd
           $RESTORE_DB "$SELECTED_FILE"
           echo "Restored successfully..."
           break
@@ -108,11 +109,8 @@ then
       echo "Invaild options"
       echo "Emps has been installed successfully, but unable to restore database. you can restore it manually"
       exit 1
+      ;;
     esac
-
-
- echo "Restoring datbase from $SELECTED_FILE"
- $RESORE_DB $SELECTED_FILE
  echo "Restored successfully..."
 else
   echo "No database backups founds on the server!"
