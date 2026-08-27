@@ -89,7 +89,7 @@ then
       select file in "${files[@]}"; do
         if [[ -n "$file" ]]
         then
-          SELECTED_FILE=(basename "$file")
+          SELECTED_FILE=$(basename "$file")
           echo "You have selected: $SELECTED_FILE"
           echo "Restoring database from $SELECTED_FILE"
           cd
@@ -111,7 +111,6 @@ then
       exit 1
       ;;
     esac
- echo "Restored successfully..."
 else
   echo "No database backups founds on the server!"
   exit 0
